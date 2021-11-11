@@ -1,5 +1,7 @@
-const App = () => {
-  return <div>hola mundo</div>;
-};
+import { renderGraph } from './graphs/main'
 
-export default App;
+const App = () => {
+  return <div ref={renderGraph}></div>
+}
+
+export default App
