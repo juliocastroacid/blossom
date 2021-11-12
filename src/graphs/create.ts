@@ -1,36 +1,11 @@
-import Graph from 'graphology'
+import { MyGraph } from './MyGraph'
 
-class MyGraph extends Graph {
-  ang = 0
-  inc: number
-
-  constructor(readonly myNodes: string[]) {
-    super()
-    this.inc = (2 * Math.PI) / myNodes.length
-  }
-
-  addNode(node: string) {
-    const nodeObj = {
-      x: Math.cos(this.ang),
-      y: Math.sin(this.ang),
-      size: 20,
-      label: node,
-      color: '#FFFFFF',
-    }
-
-    this.incAngle()
-
-    return super.addNode(node, nodeObj)
-  }
-
-  private incAngle() {
-    this.ang += this.inc
-  }
+export type CreateGraphParams = {
+  numberOfVertices: number
 }
 
-export const createGraph = () => {
-  // const nodes = ['1', '2', '3']
-  const nodes = [...new Array(20)].map((_, index) => index.toString())
+export const createGraph = ({ numberOfVertices }: CreateGraphParams) => {
+  const nodes = [...new Array(numberOfVertices)].map((_, index) => index.toString())
   const graph = new MyGraph(nodes)
 
   nodes.forEach((node) => graph.addNode(node))
