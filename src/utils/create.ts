@@ -1,3 +1,4 @@
+import Sigma from 'sigma'
 import { MyGraph } from './MyGraph'
 
 export type CreateGraphParams = {
@@ -17,4 +18,17 @@ export const createGraph = ({ numberOfVertices }: CreateGraphParams) => {
   })
 
   return graph
+}
+
+type CreateRendererParams = CreateGraphParams & { node: HTMLElement }
+
+export const createRenderer = ({ node, ...createGraphParams }: CreateRendererParams) => {
+  const graph = createGraph(createGraphParams)
+
+  return new Sigma(graph, node, {
+    defaultEdgeColor: '#2D2D2D',
+    defaultNodeColor: '#ffc419',
+    labelSize: 40,
+    edgeLabelWeight: '',
+  })
 }

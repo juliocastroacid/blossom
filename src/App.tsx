@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useRenderer } from './graphs/useRenderer'
+import { useRenderer } from './hooks/useRenderer'
 
 const App = () => {
   const [verticesCount, setVerticesCount] = useState(4)
