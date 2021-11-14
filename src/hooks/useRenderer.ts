@@ -1,18 +1,15 @@
 import { useCallback } from 'react'
-import { CreateGraphParams, createRenderer } from '../utils/create'
+import { createRenderer } from '../utils/create'
 import { removeChildren } from '../utils/removeChildren'
 
-export function useRenderer(graphParams: CreateGraphParams) {
-  const ref = useCallback(
-    (node: HTMLElement | null) => {
-      if (!node) return
+export function useRenderer() {
+  const ref = useCallback((node: HTMLElement | null) => {
+    if (!node) return
 
-      removeChildren(node)
+    removeChildren(node)
 
-      createRenderer({ ...graphParams, node })
-    },
-    [graphParams]
-  )
+    createRenderer({ node })
+  }, [])
 
   return ref
 }

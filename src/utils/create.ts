@@ -1,31 +1,24 @@
 import Sigma from 'sigma'
-import { MyGraph } from './MyGraph'
+import { BlossomGraph } from './BlossomGraph'
 
-export type CreateGraphParams = {
-  numberOfVertices: number
-}
+type CreateRendererParams = { node: HTMLElement }
 
-export const createGraph = ({ numberOfVertices }: CreateGraphParams) => {
-  const nodes = [...new Array(numberOfVertices)].map((_, index) => index.toString())
-  const graph = new MyGraph(nodes)
+export const createRenderer = ({ node }: CreateRendererParams) => {
+  const graph = new BlossomGraph()
 
-  nodes.forEach((node) => graph.addNode(node))
+  graph.addNode('0')
+  graph.addNode('1')
+  graph.addNode('2')
+  graph.addNode('3')
 
-  nodes.forEach((node, index) => {
-    const rest = nodes.slice(index + 1)
+  graph.addEdge('0', '1')
+  graph.addEdge('0', '2')
+  graph.addEdge('1', '2')
+  graph.addEdge('1', '3')
 
-    rest.forEach((otherNode) => graph.addEdge(node, otherNode))
-  })
+  console.log({ pairs: graph.findPairs() })
 
-  return graph
-}
-
-type CreateRendererParams = CreateGraphParams & { node: HTMLElement }
-
-export const createRenderer = ({ node, ...createGraphParams }: CreateRendererParams) => {
-  const graph = createGraph(createGraphParams)
-
-  return new Sigma(graph, node, {
+  new Sigma(graph, node, {
     defaultEdgeColor: '#2D2D2D',
     defaultNodeColor: '#ffc419',
     labelSize: 40,
