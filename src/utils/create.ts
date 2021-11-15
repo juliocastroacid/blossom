@@ -16,7 +16,9 @@ export const createRenderer = ({ node }: CreateRendererParams) => {
   graph.addEdge('1', '2')
   graph.addEdge('1', '3')
 
-  console.log({ pairs: graph.findPairs() })
+  console.log('PAIRS')
+  graph.pairNodes().forEach(console.log)
+  console.log('PAIRS')
 
   new Sigma(graph, node, {
     defaultEdgeColor: '#2D2D2D',
