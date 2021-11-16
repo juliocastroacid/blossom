@@ -19,15 +19,15 @@ type BlossomEdgeAttributes = {
   isPaired: boolean
 }
 
-export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, BlossomEdgeAttributes> {
-  private static Visited = class extends BlossomGraph {
-    private readonly origin: BlossomGraph
+export class BlossomGraphOld extends UndirectedGraph<BlossomNodeAttributes, BlossomEdgeAttributes> {
+  private static Visited = class extends BlossomGraphOld {
+    private readonly origin: BlossomGraphOld
 
     private readonly root: string
 
     private checkQueue: string[]
 
-    constructor(readonly p: { root: string; source: BlossomGraph }) {
+    constructor(readonly p: { root: string; source: BlossomGraphOld }) {
       super()
       this.root = p.root
       this.origin = p.source
@@ -220,12 +220,12 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
     if (!startNode) return []
 
     return this.findAugmentingPathRecursive(
-      new BlossomGraph.Visited({ root: startNode, source: this })
+      new BlossomGraphOld.Visited({ root: startNode, source: this })
     )
   }
 
   private findAugmentingPathRecursive(
-    visited: InstanceType<typeof BlossomGraph.Visited>
+    visited: InstanceType<typeof BlossomGraphOld.Visited>
   ): string[] {
     const nodeToCheck = visited.dequeueNodeToCheck()
 

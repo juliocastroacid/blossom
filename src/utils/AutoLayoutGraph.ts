@@ -1,21 +1,21 @@
 import Graph from 'graphology'
 
 export class AutoLayoutGraph extends Graph {
-  constructor(graph: Graph) {
+  constructor(graph?: Graph) {
     super()
 
-    graph.nodes().forEach((node) =>
-      this.addNode(node, {
-        x: 0,
-        y: 0,
-        size: 20,
-        label: node,
-      })
-    )
+    if (graph) {
+      graph.nodes().forEach((node) => this.addNode(node))
+      graph.edges().forEach((edge) => this.addEdge(...graph.extremities(edge)))
+    }
+  }
 
-    graph.edges().forEach((edge) => this.addEdge(...graph.extremities(edge)))
+  addNode(node: string) {
+    const res = super.addNode(node, { size: 20, label: node })
 
     this.alignNodes()
+
+    return res
   }
 
   private alignNodes() {
