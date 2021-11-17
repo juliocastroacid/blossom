@@ -1,6 +1,7 @@
 import Graph from 'graphology'
 import Sigma from 'sigma'
 import { AutoLayoutGraph } from './AutoLayoutGraph'
+import { blossom } from './blossom/blossom'
 import { BlossomGraph } from './blossom/BlossomGraph'
 import { BlossomGraphOld } from './BlossomGraphOld'
 
@@ -15,16 +16,16 @@ export const createRenderer = ({ node }: CreateRendererParams) => {
   graph.addNode('3')
 
   graph.addEdge('0', '1')
-  graph.addEdge('1', '2')
-  graph.addEdge('2', '3')
-  graph.addEdge('1', '3')
+  graph.addEdge('3', '2')
+  graph.addEdge('2', '1')
+  graph.addEdge('3', '1')
 
-  const blossom = new BlossomGraph(graph)
+  const blossomGraph = new BlossomGraph(graph)
   console.log('START')
-  blossom.pairAllNodes().forEach(console.log)
+  blossom(blossomGraph).forEach(console.log)
   console.log('END')
 
-  new Sigma(new AutoLayoutGraph(blossom), node, {
+  new Sigma(new AutoLayoutGraph(blossomGraph), node, {
     // new Sigma(graph, node, {
     defaultEdgeColor: '#2D2D2D',
     defaultNodeColor: '#ffc419',

@@ -74,17 +74,15 @@ export class Tree<T> {
     return undefined
   }
 
+  findOrFail(elem: T): Tree<T> {
+    const tree = this.find(elem)
+
+    if (!tree) throw new Error(`Elem ${elem} was not found`)
+
+    return tree
+  }
+
   has(elem: T) {
     return Boolean(this.find(elem))
   }
 }
-
-// const tree = Tree.withRoot(2)
-// const node12 = tree.addChild(12)
-// const node0 = node12.addChild(0)
-
-// console.log({
-//   tree: tree.find(0),
-//   node12: node12.find(0),
-//   node0: node0.find(0),
-// })

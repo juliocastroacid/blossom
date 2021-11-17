@@ -1,14 +1,16 @@
 import Graph, { UndirectedGraph } from 'graphology'
 import { BlossomVisited } from './BlossomVisited'
 
-type SuperNodeBackup = Array<{
-  node: string
-  attributes: BlossomNodeAttributes
-  neighbors: Array<{ neighbor: string; edgeAttributes: BlossomEdgeAttributes }>
-}>
+type SuperNodeData = {
+  data: Array<{
+    node: string
+    attributes: BlossomNodeAttributes
+    neighbors: Array<{ neighbor: string; edgeAttributes: BlossomEdgeAttributes }>
+  }>
+}
 
 type BlossomNodeAttributes = {
-  superNodeBackup?: SuperNodeBackup
+  superNodeData?: SuperNodeData
 }
 
 type BlossomEdgeAttributes = {
@@ -16,63 +18,36 @@ type BlossomEdgeAttributes = {
 }
 
 export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, BlossomEdgeAttributes> {
-  constructor(graph: Graph) {
+  constructor(graph?: Graph) {
     super()
 
+    if (graph) this.copyData(graph)
+  }
+
+  copyData(graph: Graph<any, any>) {
     graph.nodes().forEach((node) => this.addNode(node))
-    graph.edges().forEach((edge) =>
-      this.addEdge(...graph.extremities(edge), {
-        arePaired: false,
-      })
-    )
+    graph.forEachEdge((edge, attributes) => this.addEdge(...graph.extremities(edge), attributes))
   }
 
-  pairAllNodes() {
-    let augmentingPath
+  createCopy() {
+    const copy = new BlossomGraph()
 
-    while ((augmentingPath = this.findAugmentingPath()).length) {
-      console.log({ augmentingPath })
+    copy.copyData(this)
 
-      this.augmentWith(augmentingPath)
-    }
-
-    return this.getPairs()
+    return copy
   }
 
-  private findAugmentingPath(): string[] {
-    const startNode = this.pickUnpairedNode()
-
-    if (!startNode) return []
-
-    return this.findAugmentingPathRecursive(new BlossomVisited(startNode))
-  }
-
-  private findAugmentingPathRecursive(visited: BlossomVisited): string[] {
-    const nodeToCheck = visited.dequeueNodeToCheck()
-
-    if (!nodeToCheck) return []
-
-    for (const neighbor of this.neighborsThroughUnpairedEdges(nodeToCheck)) {
-      if (!this.isPaired(neighbor)) return this.buildAugmentingPath(visited, neighbor)
-      else if (visited.has(neighbor)) console.log('loop!')
-      // return this.findAugmentingPathRecursive(visited.removeBlossom(nodeToCheck, neighbor))
-      else visited.visitPair(neighbor, this.getMate(neighbor))
-    }
-
-    return this.findAugmentingPathRecursive(visited)
-  }
-
-  private isPaired(node: string) {
+  isPaired(node: string) {
     return Boolean(this.findEdge(node, (_, { arePaired }) => arePaired))
   }
 
-  private buildAugmentingPath(visited: BlossomVisited, goalNode: string) {
+  buildAugmentingPath(visited: BlossomVisited, goalNode: string) {
     return [goalNode, ...visited.pathToStart()]
   }
 
-  forced = ['0', '2']
-  private pickUnpairedNode() {
-    // if (true) return this.forced.shift()
+  static forced = ['2', '3']
+  pickUnpairedNode() {
+    if (BlossomGraph.forced.length) return BlossomGraph.forced.shift()
 
     const unpairedNodes = this.unpairedNodes()
 
@@ -80,12 +55,10 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
 
     const selection = unpairedNodes[randomIndex]
 
-    // console.log({ selection })
-
     return selection
   }
 
-  private augmentWith(augmentingPath: string[]) {
+  augmentWith(augmentingPath: string[]) {
     let hasToPair = true
     for (let i = 0; i + 1 < augmentingPath.length; i++) {
       const [first, second] = [augmentingPath[i], augmentingPath[i + 1]]
@@ -105,7 +78,7 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
     return this.filterEdges((_, { arePaired }) => arePaired)
   }
 
-  private pairedNodes() {
+  pairedNodes() {
     const pairedEdges = this.pairedEdges()
 
     return pairedEdges.flatMap((edge) => this.extremities(edge))
@@ -129,40 +102,75 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
     this.setEdgeAttribute(edge, 'arePaired', false)
   }
 
-  createSuperNode(nodes: string[]) {
-    const superNode = nodes.join('-')
+  createSuperNode(cycle: string[]) {
+    const superNode = cycle.join('-')
 
-    const superNodeBackup: SuperNodeBackup = nodes.map((node) => ({
-      node,
-      attributes: this.getNodeAttributes(node),
-      neighbors: this.neighbors(node).map((neighbor) => ({
-        neighbor,
-        edgeAttributes: this.getEdgeAttributes(this.edge(node, neighbor)),
+    const superNodeData: SuperNodeData = {
+      data: cycle.map((node) => ({
+        node,
+        attributes: this.getNodeAttributes(node),
+        neighbors: this.neighbors(node).map((neighbor) => ({
+          neighbor,
+          edgeAttributes: this.getEdgeAttributes(this.edge(node, neighbor)),
+        })),
       })),
-    }))
+    }
 
-    const superNodeNeighbors = Array.from(
-      new Set(nodes.flatMap((node) => this.neighbors(node)))
-    ).filter((node) => !nodes.includes(node))
+    this.addNode(superNode, { superNodeData })
 
-    this.addNode(superNode, { superNodeBackup })
-    superNodeNeighbors.forEach((neighbor) => this.addEdge(superNode, neighbor))
-    nodes.forEach((node) => this.dropNode(node))
+    cycle
+      .flatMap((node) => this.edges(node))
+      .filter((edge) => this.extremities(edge).some((node) => !cycle.includes(node)))
+      .forEach((edge) => {
+        const nodeOutsideCycle = this.extremities(edge).find((node) => !cycle.includes(node))
+
+        this.addEdge(superNode, nodeOutsideCycle, this.getEdgeAttributes(edge))
+      })
+
+    cycle.forEach((node) => this.dropNode(node))
 
     return superNode
   }
 
-  private neighborsThroughUnpairedEdges(node: string) {
+  isSuperNode(node: string) {
+    return Boolean(this.getNodeAttribute(node, 'superNodeData'))
+  }
+
+  restoreSuperNode(superNode: string) {
+    const backup = this.getNodeAttribute(superNode, 'superNodeData')
+
+    if (!backup) throw new Error(`Node ${superNode} is not a super node`)
+
+    backup.data.forEach(({ node, attributes }) => this.mergeNode(node, attributes))
+
+    backup.data.forEach(({ node, neighbors }) =>
+      neighbors.forEach(({ neighbor, edgeAttributes }) =>
+        this.mergeEdge(node, neighbor, edgeAttributes)
+      )
+    )
+
+    this.dropNode(superNode)
+  }
+
+  neighborsThroughUnpairedEdges(node: string) {
     const nodeUnpairedEdges = this.filterEdges(node, (_, { arePaired }) => !arePaired)
 
     return nodeUnpairedEdges.map((edge) => this.opposite(node, edge))
   }
 
-  private getMate(node: string) {
+  getMate(node: string) {
     const nodePairedEdge = this.findEdge(node, (_, { arePaired }) => arePaired)
 
     if (!nodePairedEdge) throw new Error(`Node ${node} is not paired`)
 
     return this.opposite(node, nodePairedEdge)
+  }
+
+  debug() {
+    console.log({
+      nodes: this.nodes(),
+      edges: this.edges().map((edge) => this.extremities(edge)),
+      paired: this.pairedEdges().map((edge) => this.extremities(edge)),
+    })
   }
 }
