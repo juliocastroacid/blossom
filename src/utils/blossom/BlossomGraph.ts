@@ -45,7 +45,7 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
     return [goalNode, ...visited.pathToStart()]
   }
 
-  static forced = ['2', '3']
+  static forced = ['3', '2']
   pickUnpairedNode() {
     if (BlossomGraph.forced.length) return BlossomGraph.forced.shift()
 

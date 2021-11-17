@@ -48,8 +48,6 @@ function findAugmentingPathRecursive({
         visited,
       })
 
-      graphWithoutBlossom.debug()
-
       const augmentingPath = findAugmentingPath(graphWithoutBlossom)
 
       return restoreBlossoms({ graph: graphWithoutBlossom, augmentingPath })
@@ -83,8 +81,6 @@ type RestoreBlossomsParams = {
 function restoreBlossoms({ graph, augmentingPath }: RestoreBlossomsParams) {
   const augmentingPathWithoutBlossoms: string[] = []
 
-  graph.debug()
-
   augmentingPath.forEach((node, index, array) => {
     if (graph.isSuperNode(node)) {
       const restoredBlossom = restoreBlossom({
@@ -94,8 +90,8 @@ function restoreBlossoms({ graph, augmentingPath }: RestoreBlossomsParams) {
         nextNode: array[index + 1],
       })
 
-      augmentingPath.push(...restoredBlossom)
-    } else augmentingPath.push(node)
+      augmentingPathWithoutBlossoms.push(...restoredBlossom)
+    } else augmentingPathWithoutBlossoms.push(node)
   })
 
   return augmentingPathWithoutBlossoms
@@ -109,15 +105,15 @@ type RestoreBlossomParams = {
 }
 
 function restoreBlossom({ superNode, graph, previousNode, nextNode }: RestoreBlossomParams) {
-  if (!previousNode || !nextNode) throw new Error('Isolated blossom')
-
   graph.restoreSuperNode(superNode)
 
   const cycle = superNode.split('-')
-  const connectionNode = previousNode ?? nextNode
 
-  if (!previousNode) return restoreStartingBlossom({ graph, connectionNode, cycle })
-  if (!nextNode) return restoreEndingBlossom({ graph, connectionNode, cycle })
+  if (!previousNode && nextNode)
+    return restoreStartingBlossom({ graph, connectionNode: nextNode, cycle })
+
+  if (previousNode && !nextNode)
+    restoreEndingBlossom({ graph, connectionNode: previousNode, cycle })
 
   return []
 }
@@ -133,32 +129,47 @@ function restoreStartingBlossom(params: RestoreEdgeBlossomParams) {
 }
 
 function restoreEndingBlossom({ cycle, connectionNode, graph }: RestoreEdgeBlossomParams) {
-  const linkNodeIndex = cycle.findIndex((node) => graph.areNeighbors(connectionNode, node))
-  const linkNode = cycle[linkNodeIndex]
-
-  if (!linkNode) throw new Error('Cannot link blossom cycle')
-
+  const linkNode = cycle.find((node) => graph.areNeighbors(connectionNode, node))
   const unpairedNode = cycle.find((node) => !graph.isPaired(node))
+
+  if (!linkNode || !unpairedNode) throw new Error('Cannot link blossom cycle')
 
   // we need to build a path from linkNode
   // to unpairedNode such as the number of steps is even
-  const clockWisePath: string[] = []
-  for (
-    let i = linkNodeIndex;
-    clockWisePath[clockWisePath.length - 1] !== unpairedNode;
-    i = (i + 1) % cycle.length
-  )
-    clockWisePath.push(cycle[i])
+  // (the length of the path has to be odd)
+  const path = clockWisePath({ start: linkNode, target: unpairedNode, cycle })
 
-  if (clockWisePath.length % 2 === 0) return clockWisePath
+  return path.length % 2 !== 0
+    ? path
+    : counterClockWisePath({ start: linkNode, target: unpairedNode, cycle })
+}
 
-  const counterClockWisePath: string[] = []
-  for (
-    let i = linkNodeIndex;
-    clockWisePath[clockWisePath.length - 1] !== unpairedNode;
-    i = (i - 1) % cycle.length
-  )
-    clockWisePath.push(cycle[i])
+type ClockPathParams = {
+  start: string
+  target: string
+  cycle: string[]
+}
 
-  return counterClockWisePath
+function clockWisePath({ start, target, cycle }: ClockPathParams) {
+  const startIndex = cycle.findIndex((node) => node === start)
+
+  const path: string[] = []
+  for (let i = startIndex; path[path.length - 1] !== target; i = mod(i + 1, cycle.length))
+    path.push(cycle[i])
+
+  return path
+}
+
+function counterClockWisePath({ start, target, cycle }: ClockPathParams) {
+  const startIndex = cycle.findIndex((node) => node === start)
+
+  const path: string[] = []
+  for (let i = startIndex; path[path.length - 1] !== target; i = mod(i - 1, cycle.length))
+    path.push(cycle[i])
+
+  return path
+}
+
+function mod(a: number, m: number) {
+  return ((a % m) + m) % m
 }
