@@ -42,7 +42,7 @@ export class BlossomVisited extends Tree<string> {
     return [
       ...node1RootPath.slice(0, pivotIndexInNode1RootPath),
       pivot,
-      ...node2RootPath.slice(0, pivotIndexInNode2RootPath),
+      ...node2RootPath.slice(0, pivotIndexInNode2RootPath).reverse(),
     ]
   }
 

@@ -105,15 +105,17 @@ type RestoreBlossomParams = {
 }
 
 function restoreBlossom({ superNode, graph, previousNode, nextNode }: RestoreBlossomParams) {
-  graph.restoreSuperNode(superNode)
+  const cycle = graph.getSuperNodeCycle(superNode)
 
-  const cycle = superNode.split('-')
+  graph.restoreSuperNode(superNode)
 
   if (!previousNode && nextNode)
     return restoreStartingBlossom({ graph, connectionNode: nextNode, cycle })
 
   if (previousNode && !nextNode)
-    restoreEndingBlossom({ graph, connectionNode: previousNode, cycle })
+    return restoreEndingBlossom({ graph, connectionNode: previousNode, cycle })
+
+  console.log('TODO: Middle blossom case!!!')
 
   return []
 }

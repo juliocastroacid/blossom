@@ -45,7 +45,7 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
     return [goalNode, ...visited.pathToStart()]
   }
 
-  static forced = ['3', '2']
+  static forced = []
   pickUnpairedNode() {
     if (BlossomGraph.forced.length) return BlossomGraph.forced.shift()
 
@@ -124,7 +124,7 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
       .forEach((edge) => {
         const nodeOutsideCycle = this.extremities(edge).find((node) => !cycle.includes(node))
 
-        this.addEdge(superNode, nodeOutsideCycle, this.getEdgeAttributes(edge))
+        this.mergeEdge(superNode, nodeOutsideCycle, this.getEdgeAttributes(edge))
       })
 
     cycle.forEach((node) => this.dropNode(node))
@@ -164,6 +164,14 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
     if (!nodePairedEdge) throw new Error(`Node ${node} is not paired`)
 
     return this.opposite(node, nodePairedEdge)
+  }
+
+  getSuperNodeCycle(superNode: string) {
+    const backup = this.getNodeAttribute(superNode, 'superNodeData')
+
+    if (!backup) throw new Error(`${superNode} is not a SuperNode`)
+
+    return backup.data.map((d) => d.node)
   }
 
   debug() {

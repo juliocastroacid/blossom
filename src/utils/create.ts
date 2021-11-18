@@ -1,9 +1,7 @@
-import Graph from 'graphology'
 import Sigma from 'sigma'
 import { AutoLayoutGraph } from './AutoLayoutGraph'
 import { blossom } from './blossom/blossom'
 import { BlossomGraph } from './blossom/BlossomGraph'
-import { BlossomGraphOld } from './BlossomGraphOld'
 
 type CreateRendererParams = { node: HTMLElement }
 
@@ -14,16 +12,24 @@ export const createRenderer = ({ node }: CreateRendererParams) => {
   graph.addNode('1')
   graph.addNode('2')
   graph.addNode('3')
+  graph.addNode('4')
+  graph.addNode('5')
+  graph.addNode('6')
+  graph.addNode('7')
 
   graph.addEdge('0', '1')
+  graph.addEdge('1', '3')
+  graph.addEdge('1', '4')
+  graph.addEdge('4', '5')
   graph.addEdge('3', '2')
-  graph.addEdge('2', '1')
-  graph.addEdge('3', '1')
+  graph.addEdge('2', '5')
+  graph.addEdge('5', '6')
+  graph.addEdge('6', '7')
 
   const blossomGraph = new BlossomGraph(graph)
-  console.log('START')
+  console.log('EMPAREJAMIENTO')
   blossom(blossomGraph).forEach(console.log)
-  console.log('END')
+  console.log('EMPAREJAMIENTO')
 
   new Sigma(new AutoLayoutGraph(blossomGraph), node, {
     // new Sigma(graph, node, {
