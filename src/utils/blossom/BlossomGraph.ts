@@ -32,7 +32,8 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
   createCopy() {
     const copy = new BlossomGraph()
 
-    copy.copyData(this)
+    this.nodes().forEach((node) => copy.addNode(node))
+    this.forEachEdge((edge, attributes) => copy.addEdge(...this.extremities(edge), attributes))
 
     return copy
   }
@@ -45,7 +46,7 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
     return [goalNode, ...visited.pathToStart()]
   }
 
-  static forced = []
+  static forced = ['4', '3', '5']
   pickUnpairedNode() {
     if (BlossomGraph.forced.length) return BlossomGraph.forced.shift()
 
@@ -174,11 +175,15 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
     return backup.data.map((d) => d.node)
   }
 
-  debug() {
+  debug(title?: string) {
     console.log({
+      title,
       nodes: this.nodes(),
-      edges: this.edges().map((edge) => this.extremities(edge)),
       paired: this.pairedEdges().map((edge) => this.extremities(edge)),
+      edges: this.edges().map((edge) => ({
+        ext: this.extremities(edge),
+        attr: this.getEdgeAttributes(edge),
+      })),
     })
   }
 }

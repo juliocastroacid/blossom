@@ -6,9 +6,8 @@ export function blossom(graph: Graph) {
   const blossomGraph = new BlossomGraph(graph)
 
   let augmentingPath
-  while ((augmentingPath = findAugmentingPath(blossomGraph)).length) {
-    console.log({ augmentingPath })
-
+  let maxIterations = 3
+  while (maxIterations-- && (augmentingPath = findAugmentingPath(blossomGraph)).length) {
     blossomGraph.augmentWith(augmentingPath)
   }
 
@@ -42,15 +41,17 @@ function findAugmentingPathRecursive({
   for (const neighbor of graph.neighborsThroughUnpairedEdges(nodeToCheck)) {
     if (!graph.isPaired(neighbor)) return graph.buildAugmentingPath(visited, neighbor)
     else if (visited.has(neighbor)) {
-      const graphWithoutBlossom = removeBlossom({
-        graph,
-        cycleNodes: [neighbor, nodeToCheck],
-        visited,
-      })
+      const cycle = visited.findCycle(neighbor, nodeToCheck)
 
-      const augmentingPath = findAugmentingPath(graphWithoutBlossom)
+      if (cycle.length % 2 !== 0) {
+        graph.debug('with? blossom before removal')
+        const graphWithoutBlossom = removeBlossom({ graph, blossom: cycle })
+        graph.debug('with? blossom after removal')
 
-      return restoreBlossoms({ graph: graphWithoutBlossom, augmentingPath })
+        const augmentingPath = findAugmentingPath(graphWithoutBlossom)
+
+        return restoreBlossoms({ graph: graphWithoutBlossom, augmentingPath })
+      }
     } else visited.visitPair(neighbor, graph.getMate(neighbor))
   }
 
@@ -59,16 +60,13 @@ function findAugmentingPathRecursive({
 
 type RemoveBlossomParams = {
   graph: BlossomGraph
-  cycleNodes: [string, string]
-  visited: BlossomVisited
+  blossom: string[]
 }
 
-function removeBlossom({ cycleNodes, visited, graph }: RemoveBlossomParams) {
+function removeBlossom({ blossom, graph }: RemoveBlossomParams) {
   const copy = graph.createCopy()
 
-  const cycle = visited.findCycle(...cycleNodes)
-
-  copy.createSuperNode(cycle)
+  copy.createSuperNode(blossom)
 
   return copy
 }
@@ -115,9 +113,14 @@ function restoreBlossom({ superNode, graph, previousNode, nextNode }: RestoreBlo
   if (previousNode && !nextNode)
     return restoreEndingBlossom({ graph, connectionNode: previousNode, cycle })
 
-  console.log('TODO: Middle blossom case!!!')
+  if (!previousNode || !nextNode) throw new Error('Inconsistent blossom')
 
-  return []
+  return restoreMiddleBlossom({
+    graph,
+    previousConnectionNode: previousNode,
+    nextConnectionNode: nextNode,
+    cycle,
+  })
 }
 
 type RestoreEdgeBlossomParams = {
@@ -131,19 +134,14 @@ function restoreStartingBlossom(params: RestoreEdgeBlossomParams) {
 }
 
 function restoreEndingBlossom({ cycle, connectionNode, graph }: RestoreEdgeBlossomParams) {
-  const linkNode = cycle.find((node) => graph.areNeighbors(connectionNode, node))
-  const unpairedNode = cycle.find((node) => !graph.isPaired(node))
+  const connectionNodeNeighbor = cycle.find((node) => graph.areNeighbors(connectionNode, node))
+  const cycleUnpairedNode = cycle.find((node) => !graph.isPaired(node))
 
-  if (!linkNode || !unpairedNode) throw new Error('Cannot link blossom cycle')
+  if (!connectionNodeNeighbor || !cycleUnpairedNode) throw new Error('Cannot link blossom cycle')
 
-  // we need to build a path from linkNode
-  // to unpairedNode such as the number of steps is even
-  // (the length of the path has to be odd)
-  const path = clockWisePath({ start: linkNode, target: unpairedNode, cycle })
-
-  return path.length % 2 !== 0
-    ? path
-    : counterClockWisePath({ start: linkNode, target: unpairedNode, cycle })
+  // we need to build a path from connectionNodeNeighbor to cycleUnpairedNode
+  // such as the number of steps is even (the length of the path has to be odd)
+  return evenStepsPath({ start: connectionNodeNeighbor, target: cycleUnpairedNode, cycle })
 }
 
 type ClockPathParams = {
@@ -172,6 +170,58 @@ function counterClockWisePath({ start, target, cycle }: ClockPathParams) {
   return path
 }
 
+function evenStepsPath(params: ClockPathParams) {
+  const path = clockWisePath(params)
+
+  return path.length % 2 !== 0 ? path : counterClockWisePath(params)
+}
+
 function mod(a: number, m: number) {
   return ((a % m) + m) % m
+}
+
+type RestoreMiddleBlossomParams = {
+  graph: BlossomGraph
+  nextConnectionNode: string
+  previousConnectionNode: string
+  cycle: string[]
+}
+
+function restoreMiddleBlossom({
+  graph,
+  previousConnectionNode,
+  nextConnectionNode,
+  cycle,
+}: RestoreMiddleBlossomParams) {
+  console.log('MIDDLE BLOSSOM!')
+
+  const pairedConnectionNode = [previousConnectionNode, nextConnectionNode].find((node) =>
+    graph.isPaired(node)
+  )
+
+  const unpairedConnectionNode = [previousConnectionNode, nextConnectionNode].find(
+    (node) => !graph.isPaired(node)
+  )
+
+  if (
+    !pairedConnectionNode ||
+    !unpairedConnectionNode ||
+    pairedConnectionNode === unpairedConnectionNode
+  )
+    throw new Error('Middle blossom has inconsistent connection nodes')
+
+  const pairedConnectionNodeNeighbor = graph.getMate(pairedConnectionNode)
+  const unpairedConnectionNodeNeighbor = cycle.find(
+    (node) =>
+      node !== pairedConnectionNodeNeighbor && graph.areNeighbors(node, unpairedConnectionNode)
+  )
+
+  if (!unpairedConnectionNodeNeighbor)
+    throw new Error("Middle blossom doesn't have a neighbor to link the unpaired connection node")
+
+  const [start, target] = graph.isPaired(previousConnectionNode)
+    ? [pairedConnectionNodeNeighbor, unpairedConnectionNodeNeighbor]
+    : [unpairedConnectionNodeNeighbor, pairedConnectionNodeNeighbor]
+
+  return evenStepsPath({ start, target, cycle })
 }
