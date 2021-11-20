@@ -6,12 +6,14 @@ export function blossom(graph: Graph) {
   const blossomGraph = new BlossomGraph(graph)
 
   let augmentingPath
-  let maxIterations = 3
+  let maxIterations = Infinity
   while (maxIterations-- && (augmentingPath = findAugmentingPath(blossomGraph)).length) {
+    console.log({ augmentingPath })
+
     blossomGraph.augmentWith(augmentingPath)
   }
 
-  return blossomGraph.getPairs()
+  return blossomGraph
 }
 
 function findAugmentingPath(blossomGraph: BlossomGraph): string[] {
@@ -44,9 +46,7 @@ function findAugmentingPathRecursive({
       const cycle = visited.findCycle(neighbor, nodeToCheck)
 
       if (cycle.length % 2 !== 0) {
-        graph.debug('with? blossom before removal')
         const graphWithoutBlossom = removeBlossom({ graph, blossom: cycle })
-        graph.debug('with? blossom after removal')
 
         const augmentingPath = findAugmentingPath(graphWithoutBlossom)
 

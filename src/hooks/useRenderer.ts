@@ -8,7 +8,7 @@ export function useRenderer() {
 
     removeChildren(node)
 
-    createRenderer({ node })
+    createRenderer(node)
   }, [])
 
   return ref

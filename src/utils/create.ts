@@ -1,12 +1,15 @@
+import Graph from 'graphology'
 import Sigma from 'sigma'
-import { AutoLayoutGraph } from './AutoLayoutGraph'
+import { Settings } from 'sigma/settings'
+import { AutoLayoutBlossomGraph } from './blossom/AutoLayoutBlossomGraph'
 import { blossom } from './blossom/blossom'
-import { BlossomGraph } from './blossom/BlossomGraph'
 
-type CreateRendererParams = { node: HTMLElement }
+const rendererConfig: Partial<Settings> = {
+  labelSize: 40,
+}
 
-export const createRenderer = ({ node }: CreateRendererParams) => {
-  const graph = new AutoLayoutGraph()
+export const createRenderer = (ref: HTMLElement) => {
+  const graph = new Graph()
 
   graph.addNode('0')
   graph.addNode('1')
@@ -23,16 +26,7 @@ export const createRenderer = ({ node }: CreateRendererParams) => {
   graph.addEdge('3', '4')
   graph.addEdge('3', '5')
 
-  const blossomGraph = new BlossomGraph(graph)
-  console.log('EMPAREJAMIENTO')
-  blossom(blossomGraph).forEach(console.log)
-  console.log('EMPAREJAMIENTO')
+  const blossomGraph = blossom(graph)
 
-  new Sigma(new AutoLayoutGraph(blossomGraph), node, {
-    // new Sigma(graph, node, {
-    defaultEdgeColor: '#2D2D2D',
-    defaultNodeColor: '#ffc419',
-    labelSize: 40,
-    edgeLabelWeight: '',
-  })
+  new Sigma(new AutoLayoutBlossomGraph(blossomGraph), ref, rendererConfig)
 }

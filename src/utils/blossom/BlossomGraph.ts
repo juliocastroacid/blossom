@@ -30,12 +30,7 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
   }
 
   createCopy() {
-    const copy = new BlossomGraph()
-
-    this.nodes().forEach((node) => copy.addNode(node))
-    this.forEachEdge((edge, attributes) => copy.addEdge(...this.extremities(edge), attributes))
-
-    return copy
+    return new BlossomGraph(this)
   }
 
   isPaired(node: string) {
@@ -46,7 +41,7 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
     return [goalNode, ...visited.pathToStart()]
   }
 
-  static forced = ['4', '3', '5']
+  static forced = []
   pickUnpairedNode() {
     if (BlossomGraph.forced.length) return BlossomGraph.forced.shift()
 
@@ -120,13 +115,12 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
     this.addNode(superNode, { superNodeData })
 
     cycle
-      .flatMap((node) => this.edges(node))
-      .filter((edge) => this.extremities(edge).some((node) => !cycle.includes(node)))
-      .forEach((edge) => {
-        const nodeOutsideCycle = this.extremities(edge).find((node) => !cycle.includes(node))
-
-        this.mergeEdge(superNode, nodeOutsideCycle, this.getEdgeAttributes(edge))
-      })
+      .flatMap((node) => this.neighbors(node))
+      .filter((node) => !cycle.includes(node))
+      .filter((node, i, nodes) => nodes.indexOf(node) === i) // remove duplicates
+      .forEach((superNodeNeighbor) =>
+        this.addEdge(superNode, superNodeNeighbor, { arePaired: this.isPaired(superNodeNeighbor) })
+      )
 
     cycle.forEach((node) => this.dropNode(node))
 
@@ -176,14 +170,17 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
   }
 
   debug(title?: string) {
-    console.log({
-      title,
-      nodes: this.nodes(),
-      paired: this.pairedEdges().map((edge) => this.extremities(edge)),
-      edges: this.edges().map((edge) => ({
-        ext: this.extremities(edge),
-        attr: this.getEdgeAttributes(edge),
-      })),
-    })
+    console.dir(
+      {
+        title,
+        nodes: this.nodes(),
+        paired: this.pairedEdges().map((edge) => this.extremities(edge)),
+        edges: this.edges().map((edge) => ({
+          ext: this.extremities(edge),
+          attr: this.getEdgeAttributes(edge),
+        })),
+      },
+      { depth: 4 }
+    )
   }
 }
