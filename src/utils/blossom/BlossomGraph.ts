@@ -41,19 +41,6 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
     return [goalNode, ...visited.pathToStart()]
   }
 
-  static forced = []
-  pickUnpairedNode() {
-    if (BlossomGraph.forced.length) return BlossomGraph.forced.shift()
-
-    const unpairedNodes = this.unpairedNodes()
-
-    const randomIndex = Math.floor(Math.random() * unpairedNodes.length)
-
-    const selection = unpairedNodes[randomIndex]
-
-    return selection
-  }
-
   augmentWith(augmentingPath: string[]) {
     let hasToPair = true
     for (let i = 0; i + 1 < augmentingPath.length; i++) {
@@ -80,7 +67,7 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
     return pairedEdges.flatMap((edge) => this.extremities(edge))
   }
 
-  private unpairedNodes() {
+  unpairedNodes() {
     const pairedNodes = this.pairedNodes()
 
     return this.nodes().filter((node) => !pairedNodes.includes(node))

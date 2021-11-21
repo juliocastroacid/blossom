@@ -7,8 +7,9 @@ export function blossom(graph: Graph) {
 
   let augmentingPath
   let maxIterations = Infinity
+
   while (maxIterations-- && (augmentingPath = findAugmentingPath(blossomGraph)).length) {
-    console.log({ augmentingPath })
+    console.log('augmentingPath', augmentingPath)
 
     blossomGraph.augmentWith(augmentingPath)
   }
@@ -17,14 +18,29 @@ export function blossom(graph: Graph) {
 }
 
 function findAugmentingPath(blossomGraph: BlossomGraph): string[] {
-  const startNode = blossomGraph.pickUnpairedNode()
+  const unpairedNodes = blossomGraph.unpairedNodes()
 
-  if (!startNode) return []
+  let unpairedNode
 
-  return findAugmentingPathRecursive({
-    visited: new BlossomVisited(startNode),
-    graph: blossomGraph,
-  })
+  while ((unpairedNode = pickAndRemoveNode(unpairedNodes))) {
+    const augmentingPath = findAugmentingPathRecursive({
+      visited: new BlossomVisited(unpairedNode),
+      graph: blossomGraph,
+    })
+
+    if (augmentingPath.length) return augmentingPath
+  }
+
+  return []
+}
+
+function pickAndRemoveNode(nodes: string[]) {
+  const randomIndex = Math.floor(Math.random() * nodes.length)
+
+  const selection = nodes[randomIndex]
+  nodes.splice(randomIndex, 1)
+
+  return selection
 }
 
 type FindAugmentingPathRecursiveParams = {
