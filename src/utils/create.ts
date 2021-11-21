@@ -8,7 +8,7 @@ const rendererConfig: Partial<Settings> = {
   labelSize: 40,
 }
 
-export const createRenderer = (ref: HTMLElement) => {
+const createGraph = () => {
   const graph = new Graph()
 
   graph.addNode('0')
@@ -28,5 +28,13 @@ export const createRenderer = (ref: HTMLElement) => {
 
   const blossomGraph = blossom(graph)
 
-  new Sigma(new AutoLayoutBlossomGraph(blossomGraph), ref, rendererConfig)
+  return new AutoLayoutBlossomGraph(blossomGraph)
+}
+
+export const createRenderer = (ref: HTMLElement) => {
+  const graph = createGraph()
+
+  const renderer = new Sigma(graph, ref, rendererConfig)
+
+  renderer.getCamera().disable()
 }
