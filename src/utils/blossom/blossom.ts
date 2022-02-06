@@ -9,8 +9,6 @@ export function blossom(graph: Graph) {
   let maxIterations = Infinity
 
   while (maxIterations-- && (augmentingPath = findAugmentingPath(blossomGraph)).length) {
-    console.log('augmentingPath', augmentingPath)
-
     blossomGraph.augmentWith(augmentingPath)
   }
 
@@ -209,8 +207,6 @@ function restoreMiddleBlossom({
   nextConnectionNode,
   cycle,
 }: RestoreMiddleBlossomParams) {
-  console.log('MIDDLE BLOSSOM!')
-
   const pairedConnectionNode = [previousConnectionNode, nextConnectionNode].find((node) =>
     graph.isPaired(node)
   )

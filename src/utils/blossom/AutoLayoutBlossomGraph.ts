@@ -1,5 +1,5 @@
 import Graph from 'graphology'
-import { BlossomGraph } from './BlossomGraph'
+import { BlossomGraph } from '../blossom-v2/BlossomGraph'
 
 export class AutoLayoutBlossomGraph extends Graph {
   constructor(source: BlossomGraph) {
@@ -10,7 +10,7 @@ export class AutoLayoutBlossomGraph extends Graph {
   }
 
   addNode(node: string, source: BlossomGraph) {
-    const isPaired = source.isPaired(node)
+    const isPaired = source.pairedNodes().includes(node)
 
     const res = super.addNode(node, {
       size: 20,
