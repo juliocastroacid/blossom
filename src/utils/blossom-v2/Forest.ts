@@ -26,6 +26,10 @@ export class Forest {
     return this.toCheck.shift()
   }
 
+  checkLater(node: Node) {
+    this.toCheck.push(node)
+  }
+
   findTreeOf(node: Node) {
     return this.trees.find((tree) => tree.has(node))
   }
@@ -42,10 +46,6 @@ export class Forest {
     return Boolean(this.findTreeOf(node))
   }
 
-  checkLater(node: Node) {
-    this.toCheck.push(node)
-  }
-
   pathToItsRootTree(node: Node) {
     return this.findTreeOrFail(node).pathToRoot(node)
   }
@@ -54,17 +54,7 @@ export class Forest {
     return this.findTreeOrFail(node).distanceToRoot(node)
   }
 
-  areConnectable(node1: Node, node2: Node) {
-    return (
-      this.distanceToItsRootTree(node1) % 2 === 0 && this.distanceToItsRootTree(node2) % 2 === 0
-    )
-  }
-
   areInTheSameTree(node1: Node, node2: Node) {
     return this.findTreeOrFail(node1) === this.findTreeOrFail(node2)
-  }
-
-  connect(from: Node, to: Node) {
-    return [...this.pathToItsRootTree(from).reverse(), ...this.pathToItsRootTree(to)]
   }
 }
