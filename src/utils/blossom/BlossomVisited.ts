@@ -52,13 +52,3 @@ export class BlossomVisited extends Tree<string> {
     return this.currentNode.pathToRoot().map((tree) => tree.elem)
   }
 }
-
-// const visited = new BlossomVisited('1')
-
-// visited.visitPair('a', 'b')
-// visited.moveTo('b')
-
-// console.dir(
-//   visited.pathToStart().map((elem) => elem.elem),
-//   { depth: 9 }
-// )

@@ -51,14 +51,16 @@ export class Tree {
     return Boolean(this.findSubtree(node))
   }
 
-  addChild(node: Node) {
+  connect(connectionNode: Node, newNode: Node) {
+    const connectionSubTree = this.findSubtreeOrFail(connectionNode)
+
     const child = new Tree({
-      parent: this,
-      elem: node,
+      parent: connectionSubTree,
+      elem: newNode,
       children: [],
     })
 
-    this.children.push(child)
+    connectionSubTree.children.push(child)
 
     return child
   }

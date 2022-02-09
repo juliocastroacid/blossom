@@ -89,7 +89,8 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
   compressBlossom(blossom: Blossom) {
     const newGraph = BlossomGraph.createFrom(this)
 
-    const { cycle } = blossom
+    const { root, cycle } = blossom
+    const isTheRootMate = (node: Node) => newGraph.isPaired(node) && newGraph.getMate(node) === root
     const superNode = cycle.join('-')
 
     newGraph.addNode(superNode, { blossom })
@@ -99,7 +100,7 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
       .filter((node, i, nodes) => nodes.indexOf(node) === i) // remove duplicates
       .forEach((superNodeNeighbor) =>
         newGraph.addEdge(superNode, superNodeNeighbor, {
-          arePaired: newGraph.isPaired(superNodeNeighbor),
+          arePaired: isTheRootMate(superNodeNeighbor),
         })
       )
     cycle.forEach((node) => newGraph.dropNode(node))
@@ -117,6 +118,7 @@ export class BlossomGraph extends UndirectedGraph<BlossomNodeAttributes, Blossom
           ext: this.extremities(edge),
           attr: this.getEdgeAttributes(edge),
         })),
+        edgesSimple: this.edges().map((edge) => this.extremities(edge)),
       },
       { depth: 4 }
     )

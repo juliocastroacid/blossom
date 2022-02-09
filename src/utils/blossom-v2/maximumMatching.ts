@@ -83,11 +83,16 @@ class SuperNodeExpander {
     this.blossom = p.blossom
   }
 
+  isRootMate(node: Node) {
+    return this.graph.isPaired(node) && this.graph.getMate(node) === this.blossom.root
+  }
+
   expandHaving({ previousNode, nextNode }: SuperNodeExpandParams): Node[] {
     const { root } = this.blossom
 
-    const startNode = !previousNode ? root : this.findConnectionOf(previousNode)
-    const endNode = !nextNode ? root : this.findConnectionOf(nextNode)
+    const startNode =
+      !previousNode || this.isRootMate(previousNode) ? root : this.findConnectionOf(previousNode)
+    const endNode = !nextNode || this.isRootMate(nextNode) ? root : this.findConnectionOf(nextNode)
 
     return this.buildEvenPath(startNode, endNode)
   }
@@ -166,7 +171,11 @@ class AugmentingPathFinder {
   private visitNodeOutsideForest(currentNode: Node, outsider: Node) {
     const outsiderMate = this.graph.getMate(outsider)
 
-    this.forest.findTreeOrFail(currentNode).addChild(outsider).addChild(outsiderMate)
+    this.forest
+      .findTreeOrFail(currentNode)
+      .connect(currentNode, outsider)
+      .connect(outsider, outsiderMate)
+
     this.forest.checkLater(outsiderMate)
   }
 
@@ -182,10 +191,18 @@ class AugmentingPathFinder {
   }
 
   private blossomCycle(currentNode: Node, neighbor: Node): Blossom {
-    // The nodes are in the same tree -> .connect() path will have the root
-    // repeated. We just have to remove it and the blossom cycle will be valid
-    const [root, ...cycle] = this.connect(currentNode, neighbor)
+    const currentNodeRootPath = this.forest.pathToItsRootTree(currentNode)
+    const neighbotRootPath = this.forest.pathToItsRootTree(neighbor)
 
-    return new Blossom({ cycle, root })
+    const intersection = currentNodeRootPath.filter((node) => neighbotRootPath.includes(node))
+    const [pivot] = intersection
+
+    const cycle = [
+      ...currentNodeRootPath.slice(0, currentNodeRootPath.indexOf(pivot)),
+      pivot,
+      ...neighbotRootPath.slice(0, neighbotRootPath.indexOf(pivot)).reverse(),
+    ]
+
+    return new Blossom({ cycle, root: pivot })
   }
 }
